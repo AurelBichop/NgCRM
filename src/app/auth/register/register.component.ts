@@ -9,6 +9,7 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { map } from 'rxjs';
+import { AuthService, RegisterData } from '../auth.service';
 
 @Component({
   selector: 'app-register',
@@ -137,38 +138,35 @@ export class RegisterComponent {
     }
   );
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private auth: AuthService
+  ) {}
 
   onSubmit() {
     if (this.registerForm.invalid) {
       return;
     }
 
-    this.http
-      .post(
-        'https://x8ki-letl-twmt.n7.xano.io/api:jQodi_tC/auth/signup',
-        this.registerForm.value
-      )
-      .subscribe({
-        next: () => this.router.navigateByUrl('/'),
-        error: (error) =>
-          (this.errorMessage =
-            'Un problème est survenu, merci de réessayer plus tard ou de contacter un responsable'),
-      });
+    const data: RegisterData = {
+      email: this.email.value!,
+      name: this.name.value!,
+      password: this.password.value!,
+    };
+
+    this.auth.register(data).subscribe({
+      next: () => this.router.navigateByUrl('/'),
+      error: (error) =>
+        (this.errorMessage =
+          'Un problème est survenu, merci de réessayer plus tard ou de contacter un responsable'),
+    });
   }
 
   uniqueEmailAsyncValidator(control: AbstractControl) {
-    return this.http
-      .post<{ exists: boolean }>(
-        'https://x8ki-letl-twmt.n7.xano.io/api:jQodi_tC/user/validation/exist',
-        {
-          email: control.value,
-        }
-      )
-      .pipe(
-        map((apiResponse) => apiResponse.exists),
-        map((exists) => (exists ? { uniqueEmail: true } : null))
-      );
+    return this.auth
+      .exits(control.value)
+      .pipe(map((exists) => (exists ? { uniqueEmail: true } : null)));
   }
 
   get name() {
