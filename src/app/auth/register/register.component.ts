@@ -7,6 +7,7 @@ import {
   ValidatorFn,
   Validators,
 } from '@angular/forms';
+import { Router } from '@angular/router';
 import { map } from 'rxjs';
 
 @Component({
@@ -18,6 +19,9 @@ import { map } from 'rxjs';
         Vous pourrez alors gérer facilement vos factures en tant que Freelance !
       </p>
       <form [formGroup]="registerForm" (submit)="onSubmit()">
+        <div class="alert bg-warning" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
         <div>
           <label class="mb-1" for="name">Nom d'utilisateur</label>
           <input
@@ -111,6 +115,8 @@ import { map } from 'rxjs';
   styles: [],
 })
 export class RegisterComponent {
+  errorMessage = '';
+
   registerForm = new FormGroup(
     {
       email: new FormControl(
@@ -131,11 +137,25 @@ export class RegisterComponent {
     }
   );
 
-  onSubmit() {
-    console.log(this.registerForm);
-  }
+  constructor(private http: HttpClient, private router: Router) {}
 
-  constructor(private http: HttpClient) {}
+  onSubmit() {
+    if (this.registerForm.invalid) {
+      return;
+    }
+
+    this.http
+      .post(
+        'https://x8ki-letl-twmt.n7.xano.io/api:jQodi_tC/auth/signup',
+        this.registerForm.value
+      )
+      .subscribe({
+        next: () => this.router.navigateByUrl('/'),
+        error: (error) =>
+          (this.errorMessage =
+            'Un problème est survenu, merci de réessayer plus tard ou de contacter un responsable'),
+      });
+  }
 
   uniqueEmailAsyncValidator(control: AbstractControl) {
     return this.http
